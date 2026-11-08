@@ -27,40 +27,60 @@ public class Punteggio {
 
     /**
      * Una partita nuova, 0 a 0, con la sua regola per vincere.
-     * Pretende: puntiPerVincere è almeno 1; scartoMinimo è almeno 1.
+     * Pretende: niente.
      * Promette: una partita 0 a 0, non finita, senza vincitore e con la storia vuota.
+     *           Lancia `IllegalArgumentException` se `puntiPerVincere` è minore di 1
+     *           o `scartoMinimo` è minore di 1.
      */
     public Punteggio(int puntiPerVincere, int scartoMinimo) {
         this.puntiPerVincere = puntiPerVincere;
         this.scartoMinimo = scartoMinimo;
+        if (puntiPerVincere < 1 || scartoMinimo < 1) {
+            throw new IllegalArgumentException(
+                "Attenzione! puntiPerVincere e/o scartoMinimo devono avere valore ≥ 1."
+            );
+        }
         azzera();
     }
 
     /**
      * Il lato chi ha fatto un punto.
-     * Pretende: chi non è null.
+     * Pretende: niente.
      * Promette: se la partita non era finita, il lato chi ha un punto in più, l'altro lato non
      *           cambia e il punto si aggiunge in fondo alla storia; se con questo punto il lato chi
      *           vince (regola in cima alla classe), la partita è finita e il vincitore è chi.
      *           Se la partita era già finita, non cambia niente.
+     *           Se `chi` è null lancia `IllegalArgumentException`, anche a partita finita,
+     *           e non cambia niente.
      */
     public void segnaPunto(Lato chi) {
+        if (chi == null) {
+            throw new IllegalArgumentException(
+                "Attenzione! Il lato dev'essere Lato.SINISTRA oppure Lato.DESTRA"
+            );
+        }
         if(isFinita()){
             return;
         }
         if (chi == Lato.SINISTRA) {
             PunteggioSinistra++;
-        } else{
+        } else {
             PunteggioDestra++;
         }
         storia.add(chi);
     }
 
     /**
-     * Pretende: chi non è null.
+     * Pretende: niente.
      * Promette: i punti del lato chi. Non cambia niente.
+     *           Lancia `IllegalArgumentException` se `chi` è null.
      */
     public int getPunti(Lato chi) {
+        if (chi == null) {
+            throw new IllegalArgumentException(
+                "Attenzione! Il lato dev'essere Lato.SINISTRA oppure Lato.DESTRA"
+            );
+        }
         if (chi == Lato.SINISTRA) {
             return PunteggioSinistra;
         } else{
@@ -132,5 +152,41 @@ public class Punteggio {
         PunteggioDestra = 0;
         PunteggioSinistra = 0;
         storia.clear();
+    }
+
+
+    /** - nessun "null" in storia
+     *  - ciascun contatore coincide con quanti elementi del suo lato ci sono nella storia
+     *  - scorrendo la storia dall’inizio, nessun punto compare dopo il primo istante
+     *    in cui un lato soddisfa la regola per vincere
+     */
+    boolean repOK() {
+        int sx = 0;
+        int dx = 0;
+        boolean vittoria = false;
+        for (Lato x : storia) {
+            if (x == null) {
+                return false;
+            }
+            if (x == Lato.SINISTRA) {
+                sx++;
+            } else if (x == Lato.DESTRA) {
+                dx++;
+            }
+            if (vittoria == true) {
+                return false;
+            }
+            int diffsx = sx - dx;
+            int diffdx = dx - sx;
+            if ((sx >= puntiPerVincere && diffsx >= scartoMinimo) ||
+                (dx >= puntiPerVincere && diffdx >= scartoMinimo)) {
+                vittoria = true;
+            }
+        }
+        if (sx == PunteggioSinistra && dx == PunteggioDestra) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
